@@ -242,6 +242,41 @@ class InteractionBlockWithCls(nn.Module):
                               level_start_index=deform_inputs2[2], H=H, W=W)
         return x, c, cls
 
+class InteractionBlockWithCls_Efficient(nn.Module):
+    def __init__(self, dim, num_heads=6, n_points=4, norm_layer=partial(nn.LayerNorm, eps=1e-6),
+                 drop=0., drop_path=0., with_cffn=True, cffn_ratio=0.25, init_values=0.,
+                 deform_ratio=1.0, extra_extractor=False, with_cp=False):
+        super().__init__()
+
+        self.extractor = Extractor(dim=dim, n_levels=1, num_heads=num_heads, n_points=n_points,
+                                   norm_layer=norm_layer, deform_ratio=deform_ratio, with_cffn=with_cffn,
+                                   cffn_ratio=cffn_ratio, drop=drop, drop_path=drop_path, with_cp=with_cp)
+        if extra_extractor:
+            self.extra_extractors = nn.Sequential(*[
+                Extractor(dim=dim, num_heads=num_heads, n_points=n_points, norm_layer=norm_layer,
+                          with_cffn=with_cffn, cffn_ratio=cffn_ratio, deform_ratio=deform_ratio,
+                          drop=drop, drop_path=drop_path, with_cp=with_cp)
+                for _ in range(2)
+            ])
+        else:
+            self.extra_extractors = None
+
+    def forward(self, x, c, cls, blocks, deform_inputs1, deform_inputs2, H, W):
+
+        with torch.no_grad():
+            x = torch.cat((cls, x), dim=1)
+            for idx, blk in enumerate(blocks):
+                x = blk(x)
+            cls, x = x[:, :1, ], x[:, 1:, ]
+        c = self.extractor(query=c, reference_points=deform_inputs2[0],
+                           feat=x, spatial_shapes=deform_inputs2[1],
+                           level_start_index=deform_inputs2[2], H=H, W=W)
+        if self.extra_extractors is not None:
+            for extractor in self.extra_extractors:
+                c = extractor(query=c, reference_points=deform_inputs2[0],
+                              feat=x, spatial_shapes=deform_inputs2[1],
+                              level_start_index=deform_inputs2[2], H=H, W=W)
+        return x, c, cls
 
 class SpatialPriorModule(nn.Module):
     def __init__(self, inplanes=64, embed_dim=384, with_cp=False):
@@ -452,7 +487,8 @@ class DinoV2ViTAdapter(nn.Module):
         c = torch.cat([c2, c3, c4], dim=1)
 
         # Patch Embedding forward
-        x, H, W = self.vit_module.prepare_tokens_with_masks(x, masks=None, return_HW=True)
+        with torch.no_grad():
+            x, H, W = self.vit_module.prepare_tokens_with_masks(x, masks=None, return_HW=True)
         bs, n, dim = x.shape
         cls = x[:, :1, :]
         x = x[:, 1:, :]
