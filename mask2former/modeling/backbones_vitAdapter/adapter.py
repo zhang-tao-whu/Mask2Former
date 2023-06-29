@@ -375,6 +375,8 @@ class DinoV2ViTAdapter(nn.Module):
         self.add_vit_feature = add_vit_feature
         embed_dim = vit_module.embed_dim
 
+        self.drop_path_rate = 0.
+
         self.level_embed = nn.Parameter(torch.zeros(3, embed_dim))
         self.spm = SpatialPriorModule(inplanes=conv_inplane, embed_dim=embed_dim, with_cp=False)
         self.interactions = nn.Sequential(*[

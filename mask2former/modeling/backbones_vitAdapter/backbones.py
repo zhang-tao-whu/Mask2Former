@@ -420,14 +420,10 @@ def get_models(name='vitl', weight=None):
 
 if __name__ == '__main__':
     import torch.nn.functional as F
-    model = get_models(name='vitb')
-    import torch._utils
-    # weight = torch.load('/home/zhangtao19/noise_train/vis_clip/work_dirs/dinov2_vitb14_pretrain.pth')
-    weight = torch.load('./dinov2_vitb14_pretrain.pth')
-    print(weight.keys())
-    print(weight['patch_embed.proj.weight'].shape)
-    interpolated_weight = F.interpolate(weight['patch_embed.proj.weight'], size=(16, 16), mode='bilinear', align_corners=True)
-    weight['patch_embed.proj.weight'] = interpolated_weight
-    print(interpolated_weight.shape)
-    print(weight['patch_embed.proj.bias'].shape)
-    model.load_state_dict(weight)
+    import torch
+    weight = torch.load('./dinov2_vitl14_pretrain.pth')
+    weight_ = {}
+    for key in weight:
+        print(key)
+        weight_[key] = torch.from_numpy(weight[key].cpu().numpy())
+    torch.save(weight_, './dinov2_vitl14_pretrain_.pth')
