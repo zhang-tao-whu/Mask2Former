@@ -100,7 +100,7 @@ class DinoVisionTransformer(nn.Module):
             'block_chunks': block_chunks,
         }
 
-        norm_layer = partial(nn.LayerNorm, eps=1e-6)
+        self.norm_layer = partial(nn.LayerNorm, eps=1e-6)
 
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
         self.num_tokens = 1
@@ -145,7 +145,7 @@ class DinoVisionTransformer(nn.Module):
                 proj_bias=proj_bias,
                 ffn_bias=ffn_bias,
                 drop_path=dpr[i],
-                norm_layer=norm_layer,
+                norm_layer=self.norm_layer,
                 act_layer=act_layer,
                 ffn_layer=ffn_layer,
                 init_values=init_values,
