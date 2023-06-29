@@ -509,11 +509,17 @@ class D2VitAdapterDinoV2(DinoV2ViTAdapter, Backbone):
             "res4": 16,
             "res5": 32,
         }
+        # self._out_feature_channels = {
+        #     "res2": self.num_features[0],
+        #     "res3": self.num_features[1],
+        #     "res4": self.num_features[2],
+        #     "res5": self.num_features[3],
+        # }
         self._out_feature_channels = {
-            "res2": self.num_features[0],
-            "res3": self.num_features[1],
-            "res4": self.num_features[2],
-            "res5": self.num_features[3],
+            "res2": self.vit_module.embed_dim,
+            "res3": self.vit_module.embed_dim,
+            "res4": self.vit_module.embed_dim,
+            "res5": self.vit_module.embed_dim,
         }
 
     def forward(self, x):
