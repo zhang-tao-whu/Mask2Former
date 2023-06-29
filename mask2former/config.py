@@ -113,6 +113,7 @@ def add_maskformer2_config(cfg):
     # the original paper.
     cfg.MODEL.MASK_FORMER.IMPORTANCE_SAMPLE_RATIO = 0.75
 
-    cfg.MODEL.VIT_ADAPTER.NAME = 'vitl'
-    cfg.MODEL.VIT_ADAPTER.VIT_WEIGHT = 'dinov2_vitl14_pretrain.pth'
+    cfg.MODEL.VIT_ADAPTER = CN()
+    cfg.MODEL.VIT_ADAPTER.NAME = "vitl"
+    cfg.MODEL.VIT_ADAPTER.VIT_WEIGHT = "dinov2_vitl14_pretrain.pth"
     cfg.MODEL.VIT_ADAPTER.FREEZE_VIT = False
