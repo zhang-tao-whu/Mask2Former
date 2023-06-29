@@ -5,7 +5,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mask2former.pixel_decoder.ops.modules import MSDeformAttn
+from mask2former.modeling.pixel_decoder.ops.modules import MSDeformAttn
 from timm.models.layers import trunc_normal_
 from torch.nn.init import normal_
 
