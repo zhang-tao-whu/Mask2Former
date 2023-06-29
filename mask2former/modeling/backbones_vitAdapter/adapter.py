@@ -416,7 +416,8 @@ class DinoV2ViTAdapter(nn.Module):
         self.level_embed = nn.Parameter(torch.zeros(3, embed_dim))
         self.spm = SpatialPriorModule(inplanes=conv_inplane, embed_dim=embed_dim, with_cp=False)
         self.interactions = nn.Sequential(*[
-            InteractionBlockWithCls(dim=embed_dim, num_heads=deform_num_heads, n_points=n_points,
+            # InteractionBlockWithCls(dim=embed_dim, num_heads=deform_num_heads, n_points=n_points,
+            InteractionBlockWithCls_Efficient(dim=embed_dim, num_heads=deform_num_heads, n_points=n_points,
             #InteractionBlock(dim=embed_dim, num_heads=deform_num_heads, n_points=n_points,
                              init_values=init_values, drop_path=self.drop_path_rate,
                              norm_layer=self.norm_layer, with_cffn=with_cffn,
