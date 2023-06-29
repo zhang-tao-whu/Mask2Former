@@ -460,7 +460,6 @@ class DinoV2ViTAdapter(nn.Module):
         # Interaction
         outs = list()
         for i, layer in enumerate(self.interactions):
-            print(i, len(self.interactions))
             indexes = self.interaction_indexes[i]
             x, c, cls = layer(x, c, cls, self.vit_module.blocks[indexes[0]:indexes[-1] + 1],
                               deform_inputs1, deform_inputs2, H, W)
