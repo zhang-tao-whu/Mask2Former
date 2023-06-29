@@ -375,7 +375,7 @@ class DinoV2ViTAdapter(nn.Module):
         self.add_vit_feature = add_vit_feature
         embed_dim = vit_module.embed_dim
 
-        self.drop_path_rate = vit_module.configs_dict.['drop_path_rate']
+        self.drop_path_rate = vit_module.configs_dict['drop_path_rate']
         self.norm_layer = vit_module.norm_layer
 
         self.level_embed = nn.Parameter(torch.zeros(3, embed_dim))
