@@ -205,7 +205,7 @@ class DinoVisionTransformer(nn.Module):
     def prepare_tokens_with_masks(self, x, masks=None, return_HW=False):
         B, nc, w, h = x.shape
         if return_HW:
-            x, H, W = self.patch_embed(x)  # B, HW, C
+            x, H, W = self.patch_embed(x, return_HW=True)  # B, HW, C
         else:
             x = self.patch_embed(x)  # B, HW, C
         if masks is not None:
