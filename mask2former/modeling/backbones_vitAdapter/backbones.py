@@ -397,6 +397,7 @@ def load_pretrained_weights(model, pretrained_weights, checkpoint_key):
                                         align_corners=True)
     weight['patch_embed.proj.weight'] = interpolated_weight
     model.load_state_dict(weight)
+    print("Successfully loaded the DINO V2 pre-trained weights !!!")
     return
 
 def get_models(name='vitl', weight=None):
