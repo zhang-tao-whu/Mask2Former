@@ -404,7 +404,6 @@ class DinoV2ViTAdapter(nn.Module):
         normal_(self.level_embed)
 
         self.vit_module = vit_module
-        self.blocks = self.vit_module.blocks
         if freeze_backbone:
             for p in self.vit_module.parameters():
                 p.requires_grad_(False)
@@ -463,7 +462,7 @@ class DinoV2ViTAdapter(nn.Module):
         for i, layer in enumerate(self.interactions):
             print(i, len(self.interactions))
             indexes = self.interaction_indexes[i]
-            x, c, cls = layer(x, c, cls, self.blocks[indexes[0]:indexes[-1] + 1],
+            x, c, cls = layer(x, c, cls, self.vit_module.blocks[indexes[0]:indexes[-1] + 1],
                               deform_inputs1, deform_inputs2, H, W)
             outs.append(x.transpose(1, 2).view(bs, dim, H, W).contiguous())
 
