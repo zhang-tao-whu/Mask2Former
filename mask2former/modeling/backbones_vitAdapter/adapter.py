@@ -381,7 +381,8 @@ class DinoV2ViTAdapter(nn.Module):
         self.level_embed = nn.Parameter(torch.zeros(3, embed_dim))
         self.spm = SpatialPriorModule(inplanes=conv_inplane, embed_dim=embed_dim, with_cp=False)
         self.interactions = nn.Sequential(*[
-            InteractionBlock(dim=embed_dim, num_heads=deform_num_heads, n_points=n_points,
+            InteractionBlockWithCls(dim=embed_dim, num_heads=deform_num_heads, n_points=n_points,
+            #InteractionBlock(dim=embed_dim, num_heads=deform_num_heads, n_points=n_points,
                              init_values=init_values, drop_path=self.drop_path_rate,
                              norm_layer=self.norm_layer, with_cffn=with_cffn,
                              cffn_ratio=cffn_ratio, deform_ratio=deform_ratio,
@@ -454,13 +455,15 @@ class DinoV2ViTAdapter(nn.Module):
         # Patch Embedding forward
         x, H, W = self.vit_module.prepare_tokens_with_masks(x, masks=None, return_HW=True)
         bs, n, dim = x.shape
+        cls = x[:, :1, :]
+        x = x[:, 1:, :]
 
         # Interaction
         outs = list()
         for i, layer in enumerate(self.interactions):
             indexes = self.interaction_indexes[i]
-            x, c = layer(x, c, self.blocks[indexes[0]:indexes[-1] + 1],
-                         deform_inputs1, deform_inputs2, H, W)
+            x, c, cls = layer(x, c, cls, self.blocks[indexes[0]:indexes[-1] + 1],
+                              deform_inputs1, deform_inputs2, H, W)
             outs.append(x.transpose(1, 2).view(bs, dim, H, W).contiguous())
 
         # Split & Reshape
