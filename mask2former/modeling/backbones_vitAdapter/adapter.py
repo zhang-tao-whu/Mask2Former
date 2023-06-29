@@ -324,7 +324,7 @@ def get_adapter_args(name='vitl', backbone_weight=None, freeze_backbone=False):
             'deform_ratio': 0.5,
             'add_vit_feature': True,
             'use_extra_extractor': True,
-            'with_cp': True,
+            'with_cp': False,
             'interaction_indexes': [[0, 5], [6, 11], [12, 17], [18, 23]],
         }
     elif name == 'vitb':
@@ -340,7 +340,7 @@ def get_adapter_args(name='vitl', backbone_weight=None, freeze_backbone=False):
             'deform_ratio': 0.5,
             'add_vit_feature': True,
             'use_extra_extractor': True,
-            'with_cp': True,
+            'with_cp': False,
             'interaction_indexes': [[0, 2], [3, 5], [6, 8], [9, 11]],
         }
     else:
