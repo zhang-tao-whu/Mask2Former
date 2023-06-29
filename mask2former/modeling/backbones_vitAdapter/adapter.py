@@ -230,7 +230,7 @@ class InteractionBlockWithCls(nn.Module):
                           level_start_index=deform_inputs1[2])
         x = torch.cat((cls, x), dim=1)
         for idx, blk in enumerate(blocks):
-            x = blk(x, H, W)
+            x = blk(x)
         cls, x = x[:, :1, ], x[:, 1:, ]
         c = self.extractor(query=c, reference_points=deform_inputs2[0],
                            feat=x, spatial_shapes=deform_inputs2[1],
