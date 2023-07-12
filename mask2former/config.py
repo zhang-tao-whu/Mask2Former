@@ -117,3 +117,5 @@ def add_maskformer2_config(cfg):
     cfg.MODEL.VIT_ADAPTER.NAME = "vitl"
     cfg.MODEL.VIT_ADAPTER.VIT_WEIGHT = "dinov2_vitl14_pretrain.pth"
     cfg.MODEL.VIT_ADAPTER.FREEZE_VIT = False
+    cfg.MODEL.VIT_ADAPTER.FINETUNE = False
+    cfg.MODEL.VIT_ADAPTER.FINETUNE_INDEXES = [0, ]

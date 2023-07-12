@@ -261,13 +261,18 @@ class InteractionBlockWithCls_Efficient(nn.Module):
         else:
             self.extra_extractors = None
 
-    def forward(self, x, c, cls, blocks, deform_inputs1, deform_inputs2, H, W):
-
-        with torch.no_grad():
+    def forward(self, x, c, cls, blocks, deform_inputs1, deform_inputs2, H, W, finetune=False):
+        if finetune:
             x = torch.cat((cls, x), dim=1)
             for idx, blk in enumerate(blocks):
                 x = blk(x)
             cls, x = x[:, :1, ], x[:, 1:, ]
+        else:
+            with torch.no_grad():
+                x = torch.cat((cls, x), dim=1)
+                for idx, blk in enumerate(blocks):
+                    x = blk(x)
+                cls, x = x[:, :1, ], x[:, 1:, ]
         c = self.extractor(query=c, reference_points=deform_inputs2[0],
                            feat=x, spatial_shapes=deform_inputs2[1],
                            level_start_index=deform_inputs2[2], H=H, W=W)
@@ -341,7 +346,9 @@ class SpatialPriorModule(nn.Module):
             outs = _inner_forward(x)
         return outs
 
-def get_adapter_args(name='vitl', backbone_weight=None, freeze_backbone=False):
+def get_adapter_args(name='vitl', backbone_weight=None,
+                     freeze_backbone=False, finetune=False,
+                     finetune_indexes=[0, ]):
     if freeze_backbone:
         assert backbone_weight is not None
     vit_backbone = get_models(name, backbone_weight)
@@ -380,7 +387,11 @@ def get_adapter_args(name='vitl', backbone_weight=None, freeze_backbone=False):
         }
     else:
         raise NotImplementedError
-    adapter_args.update({'freeze_backbone': freeze_backbone})
+    adapter_args.update({
+        'freeze_backbone': freeze_backbone,
+        'finetune': finetune,
+        'finetune_indexes': finetune_indexes,
+    })
     #adapter_model = DinoV2ViTAdapter(**adapter_args)
     return adapter_args
 
@@ -401,6 +412,8 @@ class DinoV2ViTAdapter(nn.Module):
         use_extra_extractor=True,
         with_cp=False,
         freeze_backbone=False,
+        finetune=False,
+        finetune_indexes=[0, ],
     ):
         super().__init__()
 
@@ -443,7 +456,24 @@ class DinoV2ViTAdapter(nn.Module):
         if freeze_backbone:
             for p in self.vit_module.parameters():
                 p.requires_grad_(False)
+            if finetune:
+                for p in self.vit_module.patch_embed.parameters():
+                    p.requires_grad_(True)
+                for p in self.vit_module.cls_token.parameters():
+                    p.requires_grad_(True)
+                for p in self.vit_module.mask_token.parameters():
+                    p.requires_grad_(True)
+                for p in self.vit_module.pos_embed.parameters():
+                    p.requires_grad_(True)
+                finetuned_interaction_indexes = finetune_indexes
+                self.finetuned_interaction_indexes = finetuned_interaction_indexes
+                for idx in finetuned_interaction_indexes:
+                    indexes = self.interaction_indexes[idx]
+                    for p in self.vit_module.blocks[indexes[0]:indexes[-1] + 1].parameters():
+                        p.requires_grad_(True)
+
         self.freeze_backbone = freeze_backbone
+        self.finetune = finetune
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -480,6 +510,15 @@ class DinoV2ViTAdapter(nn.Module):
     def forward(self, x):
         if self.freeze_backbone:
             self.vit_module.eval()
+            if self.finetune and self.training:
+                self.vit_module.patch_embed.train()
+                self.vit_module.cls_token.train()
+                self.vit_module.mask_token.train()
+                self.vit_module.pos_embed.train()
+                finetuned_interaction_indexes = self.finetuned_interaction_indexes
+                for idx in finetuned_interaction_indexes:
+                    indexes = self.interaction_indexes[idx]
+                    self.vit_module.blocks[indexes[0]:indexes[-1] + 1].train()
         deform_inputs1, deform_inputs2 = deform_inputs(x)
 
         # SPM forward
@@ -497,9 +536,13 @@ class DinoV2ViTAdapter(nn.Module):
         # Interaction
         outs = list()
         for i, layer in enumerate(self.interactions):
+            if i in self.finetuned_interaction_indexes:
+                finetune = True
+            else:
+                finetune = False
             indexes = self.interaction_indexes[i]
             x, c, cls = layer(x, c, cls, self.vit_module.blocks[indexes[0]:indexes[-1] + 1],
-                              deform_inputs1, deform_inputs2, H, W)
+                              deform_inputs1, deform_inputs2, H, W, finetune=finetune)
             outs.append(x.transpose(1, 2).view(bs, dim, H, W).contiguous())
 
         # Split & Reshape
@@ -533,10 +576,14 @@ class D2VitAdapterDinoV2(DinoV2ViTAdapter, Backbone):
         name = cfg.MODEL.VIT_ADAPTER.NAME
         backbone_weight = cfg.MODEL.VIT_ADAPTER.VIT_WEIGHT
         freeze_backbone = cfg.MODEL.VIT_ADAPTER.FREEZE_VIT
+        finetune = cfg.MODEL.VIT_ADAPTER.FINETUNE
+        finetune_indexes = cfg.MODEL.VIT_ADAPTER.FINETUNE_INDEXES
         adapter_args = get_adapter_args(
             name=name,
             backbone_weight=backbone_weight,
-            freeze_backbone=freeze_backbone
+            freeze_backbone=freeze_backbone,
+            finetune=finetune,
+            finetune_indexes=finetune_indexes,
         )
         super().__init__(**adapter_args)
 
