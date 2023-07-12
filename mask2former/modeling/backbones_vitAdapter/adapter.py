@@ -457,9 +457,9 @@ class DinoV2ViTAdapter(nn.Module):
             for p in self.vit_module.parameters():
                 p.requires_grad_(False)
             if finetune:
-                self.vit_module.patch_embed.requires_grad_(True)
-                self.vit_module.cls_token.requires_grad_(True)
-                self.vit_module.pos_embed.requires_grad_(True)
+                # self.vit_module.patch_embed.requires_grad_(True)
+                # self.vit_module.cls_token.requires_grad_(True)
+                # self.vit_module.pos_embed.requires_grad_(True)
                 finetuned_interaction_indexes = finetune_indexes
                 self.finetuned_interaction_indexes = finetuned_interaction_indexes
                 for idx in finetuned_interaction_indexes:
@@ -506,7 +506,7 @@ class DinoV2ViTAdapter(nn.Module):
         if self.freeze_backbone:
             self.vit_module.eval()
             if self.finetune and self.training:
-                self.vit_module.patch_embed.train()
+                # self.vit_module.patch_embed.train()
                 finetuned_interaction_indexes = self.finetuned_interaction_indexes
                 for idx in finetuned_interaction_indexes:
                     indexes = self.interaction_indexes[idx]
