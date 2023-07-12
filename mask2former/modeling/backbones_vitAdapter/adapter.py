@@ -508,9 +508,6 @@ class DinoV2ViTAdapter(nn.Module):
             self.vit_module.eval()
             if self.finetune and self.training:
                 self.vit_module.patch_embed.train()
-                self.vit_module.cls_token.train()
-                self.vit_module.mask_token.train()
-                self.vit_module.pos_embed.train()
                 finetuned_interaction_indexes = self.finetuned_interaction_indexes
                 for idx in finetuned_interaction_indexes:
                     indexes = self.interaction_indexes[idx]
@@ -523,8 +520,11 @@ class DinoV2ViTAdapter(nn.Module):
         c = torch.cat([c2, c3, c4], dim=1)
 
         # Patch Embedding forward
-        with torch.no_grad():
+        if self.finetune:
             x, H, W = self.vit_module.prepare_tokens_with_masks(x, masks=None, return_HW=True)
+        else:
+            with torch.no_grad():
+                x, H, W = self.vit_module.prepare_tokens_with_masks(x, masks=None, return_HW=True)
         bs, n, dim = x.shape
         cls = x[:, :1, :]
         x = x[:, 1:, :]
