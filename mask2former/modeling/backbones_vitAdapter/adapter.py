@@ -459,7 +459,6 @@ class DinoV2ViTAdapter(nn.Module):
             if finetune:
                 self.vit_module.patch_embed.requires_grad_(True)
                 self.vit_module.cls_token.requires_grad_(True)
-                self.vit_module.mask_token.requires_grad_(True)
                 self.vit_module.pos_embed.requires_grad_(True)
                 finetuned_interaction_indexes = finetune_indexes
                 self.finetuned_interaction_indexes = finetuned_interaction_indexes
