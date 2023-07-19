@@ -531,7 +531,7 @@ class DinoV2ViTAdapter(nn.Module):
         # Interaction
         outs = list()
         for i, layer in enumerate(self.interactions):
-            if i in self.finetuned_interaction_indexes:
+            if self.finetune and i in self.finetuned_interaction_indexes:
                 finetune = True
             else:
                 finetune = False
